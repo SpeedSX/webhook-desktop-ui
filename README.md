@@ -52,7 +52,7 @@ npm run build:linux  # Linux
 
 1. **Start the App**: The Electron app automatically starts the integrated proxy server on port 3001
 2. **Generate Token**: Click "Generate New Token" or enter a custom GUID
-3. **Get Webhook URL**: Use the provided URL (`https://webhooktest.emergemarket.dev/{token}`) in your applications
+3. **Get Webhook URL**: Use the provided URL (`https://webhooktest.xxx.dev/{token}`) in your applications
 4. **Monitor Requests**: All incoming webhook requests will appear in the app in real-time
 5. **Inspect Details**: Click on any request to see headers, body, and full details
 
@@ -61,7 +61,7 @@ npm run build:linux  # Linux
 - **Main Process**: Electron main process that manages the app window and embedded proxy server
 - **Renderer Process**: The UI that displays the webhook testing interface
 - **Integrated Proxy**: Express server that handles CORS and proxies requests to the backend API
-- **Backend API**: https://webhooktest.emergemarket.dev (external service)
+- **Backend API**: https://webhooktest.xxx.dev (external service)
 
 ## Project Structure
 
