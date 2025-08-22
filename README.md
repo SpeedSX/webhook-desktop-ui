@@ -19,6 +19,32 @@ A desktop application for webhook testing and inspection with integrated proxy s
    ```bash
    npm install
    ```
+3. **Configure the application:**
+   ```bash
+   cp config.example.js config.js
+   # Edit config.js with your webhook backend URL
+   ```
+
+## Configuration
+
+⚠️ **Important**: Before using the app, you must configure your webhook backend URL.
+
+1. **Copy the example configuration:**
+   ```bash
+   cp config.example.js config.js
+   ```
+
+2. **Edit `config.js` with your settings:**
+   ```javascript
+   const config = {
+     webhookBackendUrl: 'https://your-private-webhook-service.com',
+     // ... other settings
+   };
+   ```
+
+3. **Never commit `config.js` to public repositories!**
+
+See [CONFIGURATION.md](CONFIGURATION.md) for detailed configuration options.
 
 ## Usage
 
@@ -50,9 +76,9 @@ npm run build:linux  # Linux
 
 ## How It Works
 
-1. **Start the App**: The Electron app automatically starts the integrated proxy server on port 3001
+1. **Start the App**: The Electron app automatically starts the integrated proxy server on the configured port (default: 3002)
 2. **Generate Token**: Click "Generate New Token" or enter a custom GUID
-3. **Get Webhook URL**: Use the provided URL (`https://webhooktest.xxx.dev/{token}`) in your applications
+3. **Get Webhook URL**: Use the provided URL (`{your-webhook-backend-url}/{token}`) in your applications
 4. **Monitor Requests**: All incoming webhook requests will appear in the app in real-time
 5. **Inspect Details**: Click on any request to see headers, body, and full details
 
@@ -61,7 +87,7 @@ npm run build:linux  # Linux
 - **Main Process**: Electron main process that manages the app window and embedded proxy server
 - **Renderer Process**: The UI that displays the webhook testing interface
 - **Integrated Proxy**: Express server that handles CORS and proxies requests to the backend API
-- **Backend API**: https://webhooktest.xxx.dev (external service)
+- **Backend API**: Your configured webhook backend service (external service)
 
 ## Project Structure
 

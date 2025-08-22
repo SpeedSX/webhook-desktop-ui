@@ -1,8 +1,17 @@
 // Webhook Testing UI Application (Desktop Version)
 class WebhookUI {
   constructor() {
-    this.baseUrl = 'https://webhooktest.emergemarket.dev';
-    this.proxyUrl = 'http://localhost:3002/api'; // Desktop version uses port 3002
+    // Load configuration from config.js
+    this.config = window.webhookUIConfig || {
+      webhookBackendUrl: 'https://your-private-webhook-service.com',
+      proxyPort: 3002,
+      proxyPortRange: { start: 3002, end: 3012 },
+      autoRefreshInterval: 3000,
+      maxLogCount: 50
+    };
+    
+    this.baseUrl = this.config.webhookBackendUrl;
+    this.proxyUrl = `http://localhost:${this.config.proxyPort}/api`;
     this.currentToken = null;
     this.autoRefreshInterval = null;
     this.requests = [];
@@ -102,7 +111,7 @@ class WebhookUI {
   async loadRequests() {
     if (!this.currentToken) return;
 
-    const count = document.getElementById('logCount').value || 50;
+         const count = document.getElementById('logCount').value || this.config.maxLogCount;
     
     try {
       const response = await fetch(`${this.proxyUrl}/${this.currentToken}/log/${count}`);
@@ -424,9 +433,9 @@ class WebhookUI {
     button.innerHTML = '<i class="fas fa-pause"></i> Stop Auto Refresh';
     button.classList.add('auto-refresh-active');
     
-    this.autoRefreshInterval = setInterval(() => {
-      this.loadRequests();
-    }, 3000); // Refresh every 3 seconds
+         this.autoRefreshInterval = setInterval(() => {
+       this.loadRequests();
+     }, this.config.autoRefreshInterval); // Refresh interval from config
   }
 
   stopAutoRefresh() {
@@ -452,16 +461,16 @@ class WebhookUI {
       statusElement.className = 'connection-status checking';
       statusElement.innerHTML = '<i class="fas fa-circle"></i><span>Checking proxy connection...</span>';
       
-      // Try the configured proxy URL first
-      let healthUrl = this.proxyUrl.replace('/api', '/health');
-      let response = await fetch(healthUrl, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        // If primary port fails, try alternative ports
-        for (let port = 3002; port <= 3012; port++) {
+             // Try the configured proxy URL first
+       let healthUrl = this.proxyUrl.replace('/api', '/health');
+       let response = await fetch(healthUrl, {
+         method: 'GET',
+         headers: { 'Content-Type': 'application/json' }
+       });
+       
+       if (!response.ok) {
+         // If primary port fails, try alternative ports
+         for (let port = this.config.proxyPortRange.start; port <= this.config.proxyPortRange.end; port++) {
           try {
             healthUrl = `http://localhost:${port}/health`;
             response = await fetch(healthUrl, {

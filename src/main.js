@@ -10,7 +10,22 @@ let proxyServer;
 // Proxy server setup
 function startProxyServer() {
   const proxyApp = express();
-  const PORT = 3002; // Use different port from web version (3001)
+  
+  // Load configuration
+  let config;
+  try {
+    config = require('../config.js');
+  } catch (err) {
+    // Fallback configuration if config.js is not available
+    config = {
+      webhookBackendUrl: 'https://your-private-webhook-service.com',
+      proxyPort: 3002,
+      proxyPortRange: { start: 3002, end: 3012 }
+    };
+    console.warn('⚠️  config.js not found, using fallback configuration');
+  }
+  
+  const PORT = config.proxyPort || 3002; // Use configured port or default
 
   // Enable CORS for all routes
   proxyApp.use(cors({
@@ -21,7 +36,7 @@ function startProxyServer() {
 
   // Proxy middleware configuration
   const proxyOptions = {
-    target: 'https://webhooktest.emergemarket.dev',
+    target: config.webhookBackendUrl,
     changeOrigin: true,
     pathRewrite: {
       '^/api': '', // Remove /api prefix when forwarding
@@ -47,10 +62,10 @@ function startProxyServer() {
     if (err) {
       console.error(`❌ Failed to start proxy server on port ${PORT}:`, err.message);
       // Try alternative ports
-      proxyServer = tryAlternativePorts(proxyApp, PORT + 1, PORT + 10);
+      proxyServer = tryAlternativePorts(proxyApp, config.proxyPortRange.start, config.proxyPortRange.end);
     } else {
       console.log(`✅ Webhook UI Proxy Server running on http://localhost:${PORT}`);
-      console.log(`🔗 Proxying requests to: https://webhooktest.emergemarket.dev`);
+      console.log(`🔗 Proxying requests to: ${config.webhookBackendUrl}`);
       console.log(`🚀 Frontend should use: http://localhost:${PORT}/api for webhook API calls`);
     }
   });
@@ -58,7 +73,7 @@ function startProxyServer() {
   proxyServer.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.log(`⚠️  Port ${PORT} is busy, trying alternative ports...`);
-      proxyServer = tryAlternativePorts(proxyApp, PORT + 1, PORT + 10);
+      proxyServer = tryAlternativePorts(proxyApp, config.proxyPortRange.start, config.proxyPortRange.end);
     } else {
       console.error('Proxy server error:', err);
     }
@@ -73,7 +88,7 @@ function tryAlternativePorts(app, startPort, endPort) {
     try {
       const server = app.listen(port, () => {
         console.log(`✅ Webhook UI Proxy Server running on http://localhost:${port} (alternative port)`);
-        console.log(`🔗 Proxying requests to: https://webhooktest.emergemarket.dev`);
+        console.log(`🔗 Proxying requests to: ${config.webhookBackendUrl}`);
         console.log(`🚀 Frontend should use: http://localhost:${port}/api for webhook API calls`);
         
         // Update the frontend to use the new port
