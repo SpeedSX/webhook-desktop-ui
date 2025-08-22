@@ -48,11 +48,8 @@ class WebhookUI {
     document.getElementById('searchFilter').addEventListener('input', () => this.filterRequests());
     document.getElementById('methodFilter').addEventListener('change', () => this.filterRequests());
     
-    // Modal
-    document.getElementById('closeModal').addEventListener('click', () => this.closeModal());
-    document.getElementById('requestModal').addEventListener('click', (e) => {
-      if (e.target.id === 'requestModal') this.closeModal();
-    });
+    // Details Panel
+    document.getElementById('closeDetailsPanel').addEventListener('click', () => this.closeDetailsPanel());
 
     // Enter key for custom token
     document.getElementById('customToken').addEventListener('keypress', (e) => {
@@ -215,13 +212,39 @@ class WebhookUI {
     return bodyStr.length > 50 ? bodyStr.substring(0, 50) + '...' : bodyStr;
   }
 
-  // Request Details Modal
+  // Request Details Panel
   showRequestDetails(request) {
-    const modal = document.getElementById('requestModal');
+    const panel = document.getElementById('requestDetailsPanel');
     const details = document.getElementById('requestDetails');
+    const requestId = request.Id || request.id;
+    
+    // Check if clicking on the same request - toggle panel
+    if (this.currentSelectedRequest && 
+        (this.currentSelectedRequest.Id || this.currentSelectedRequest.id) === requestId &&
+        panel.style.display === 'block') {
+      this.closeDetailsPanel();
+      return;
+    }
+    
+    // Clear any active state from previous requests
+    document.querySelectorAll('.request-item.active').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Find and highlight the clicked request item
+    const requestItems = document.querySelectorAll('.request-item');
+    requestItems.forEach(item => {
+      const itemId = item.getAttribute('data-request-id');
+      if (itemId === requestId) {
+        item.classList.add('active');
+      }
+    });
     
     details.innerHTML = this.renderRequestDetails(request);
-    modal.style.display = 'flex';
+    panel.style.display = 'block';
+    
+    // Store current request for reference
+    this.currentSelectedRequest = request;
   }
 
   renderRequestDetails(request) {
@@ -376,8 +399,17 @@ class WebhookUI {
     return div.innerHTML;
   }
 
-  closeModal() {
-    document.getElementById('requestModal').style.display = 'none';
+  closeDetailsPanel() {
+    const panel = document.getElementById('requestDetailsPanel');
+    panel.style.display = 'none';
+    
+    // Clear active state from all request items
+    document.querySelectorAll('.request-item.active').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Clear current selection
+    this.currentSelectedRequest = null;
   }
 
   // Filtering
