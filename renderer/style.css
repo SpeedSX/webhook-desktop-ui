@@ -530,3 +530,90 @@ a:hover {
 .hidden {
   display: none !important;
 }
+
+/* Collapsible Sections */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.collapsible .collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: color 0.2s ease;
+  margin: 0;
+}
+
+.collapsible .collapsible-header:hover {
+  color: var(--primary-color);
+}
+
+.collapsible .collapsible-header i {
+  transition: transform 0.2s ease;
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
+}
+
+/* For sections that use fa-chevron-down (expanded by default) */
+.collapsible:not(.collapsed) .collapsible-header i.fa-chevron-down {
+  transform: rotate(0deg); /* Expanded: pointing down */
+}
+
+.collapsible.collapsed .collapsible-header i.fa-chevron-down {
+  transform: rotate(-90deg); /* Collapsed: pointing right */
+}
+
+/* For sections that use fa-chevron-right (collapsed by default) */
+.collapsible:not(.collapsed) .collapsible-header i.fa-chevron-right {
+  transform: rotate(90deg); /* Expanded: pointing down */
+}
+
+.collapsible.collapsed .collapsible-header i.fa-chevron-right {
+  transform: rotate(0deg); /* Collapsed: pointing right */
+}
+
+.collapsible .collapsible-content {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.collapsible.collapsed .collapsible-content {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Copy Button */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--surface-color);
+  color: var(--text-secondary);
+}
+
+.copy-btn:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.copy-btn i {
+  font-size: 0.75rem;
+}

@@ -17,6 +17,7 @@ class WebhookUI {
     this.bindEvents();
     this.checkProxyConnection();
     this.loadTokenFromStorage();
+    this.addCopyToClipboard();
   }
 
   // Event Bindings
@@ -228,9 +229,16 @@ class WebhookUI {
     }
     
     return `
-      <div class="detail-section">
-        <h4>Request Information</h4>
-        <div class="detail-grid">
+      <div class="detail-section collapsible">
+        <div class="section-header">
+          <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+            <i class="fas fa-chevron-down"></i> Request Information
+          </h4>
+          <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.detail-grid').copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="detail-grid collapsible-content">
           <span class="detail-label">Method:</span>
           <span class="detail-value">${messageObj.Method || request.method || 'GET'}</span>
           
@@ -251,32 +259,67 @@ class WebhookUI {
         </div>
       </div>
 
-      <div class="detail-section">
-        <h4>Headers</h4>
-        <div class="code-block">${this.formatJSON(messageObj.Headers || request.headers || {})}</div>
+      <div class="detail-section collapsible collapsed">
+        <div class="section-header">
+          <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+            <i class="fas fa-chevron-right"></i> Headers
+          </h4>
+          <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.code-block').copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="code-block collapsible-content">${this.formatJSON(messageObj.Headers || request.headers || {})}</div>
       </div>
 
-      <div class="detail-section">
-        <h4>Query Parameters</h4>
-        <div class="code-block">${this.formatJSON(messageObj.QueryParameters || request.query || [])}</div>
+      <div class="detail-section collapsible">
+        <div class="section-header">
+          <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+            <i class="fas fa-chevron-down"></i> Query Parameters
+          </h4>
+          <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.code-block').copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="code-block collapsible-content">${this.formatJSON(messageObj.QueryParameters || request.query || [])}</div>
       </div>
 
-      <div class="detail-section">
-        <h4>Request Body</h4>
-        <div class="code-block">${this.formatRequestBody(messageObj.Body || request.body)}</div>
+      <div class="detail-section collapsible">
+        <div class="section-header">
+          <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+            <i class="fas fa-chevron-down"></i> Request Body
+          </h4>
+          <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.code-block').copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="code-block collapsible-content">${this.formatRequestBody(messageObj.Body || request.body)}</div>
       </div>
 
       ${messageObj.BodyObject ? `
-        <div class="detail-section">
-          <h4>Parsed Body Object</h4>
-          <div class="code-block">${this.formatJSON(messageObj.BodyObject)}</div>
+        <div class="detail-section collapsible collapsed">
+          <div class="section-header">
+            <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+              <i class="fas fa-chevron-right"></i> Parsed Body Object
+            </h4>
+            <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.code-block').copyToClipboard()">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-block collapsible-content">${this.formatJSON(messageObj.BodyObject)}</div>
         </div>
       ` : ''}
 
       ${request.Message ? `
-        <div class="detail-section">
-          <h4>Raw Message</h4>
-          <div class="code-block">${this.escapeHtml(request.Message)}</div>
+        <div class="detail-section collapsible collapsed">
+          <div class="section-header">
+            <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+              <i class="fas fa-chevron-right"></i> Raw Message
+            </h4>
+            <button class="copy-btn" onclick="event.stopPropagation(); this.parentElement.parentElement.querySelector('.code-block').copyToClipboard()">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="code-block collapsible-content">${this.escapeHtml(request.Message)}</div>
         </div>
       ` : ''}
     `;
@@ -480,6 +523,85 @@ class WebhookUI {
       }).catch(() => {
         this.showError('Failed to copy URL to clipboard');
       });
+    }
+  }
+
+  // Add copyToClipboard method to HTMLElement prototype
+  addCopyToClipboard() {
+    if (!HTMLElement.prototype.copyToClipboard) {
+      HTMLElement.prototype.copyToClipboard = function() {
+        const text = this.textContent || this.innerText;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(() => {
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              padding: 12px 20px;
+              border-radius: 4px;
+              color: white;
+              font-weight: 500;
+              z-index: 10000;
+              max-width: 400px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              background-color: #10b981;
+            `;
+            notification.textContent = 'Content copied to clipboard!';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              notification.remove();
+            }, 2000);
+          }).catch(() => {
+            this.showError('Failed to copy to clipboard');
+          });
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          try {
+            document.execCommand('copy');
+            textArea.remove();
+            
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              padding: 12px 20px;
+              border-radius: 4px;
+              color: white;
+              font-weight: 500;
+              z-index: 10000;
+              max-width: 400px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              background-color: #10b981;
+            `;
+            notification.textContent = 'Content copied to clipboard!';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              notification.remove();
+            }, 2000);
+          } catch (err) {
+            textArea.remove();
+            this.showError('Failed to copy to clipboard');
+          }
+        }
+      };
     }
   }
 
