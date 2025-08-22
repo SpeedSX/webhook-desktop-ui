@@ -307,6 +307,42 @@ a:hover {
   border-bottom: none;
 }
 
+/* New Request Highlighting */
+.request-item.new-request {
+  background-color: #fef3c7; /* Light yellow background */
+  border-left: 4px solid var(--warning-color);
+  font-weight: 600;
+}
+
+.request-item.new-request:hover {
+  background-color: #fde68a; /* Slightly darker yellow on hover */
+}
+
+.request-item.new-request .request-method {
+  font-weight: 700;
+}
+
+.request-item.new-request .request-path {
+  font-weight: 600;
+}
+
+.request-item.new-request .request-time {
+  font-weight: 600;
+}
+
+/* New Requests Badge */
+.new-requests-badge {
+  background-color: var(--warning-color);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-sm);
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .request-header {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
@@ -437,10 +473,13 @@ a:hover {
   white-space: pre-wrap;
   word-break: break-all;
   margin: var(--spacing-sm) 0;
+  max-height: none; /* Remove height constraint */
 }
 
 .detail-section {
   margin-bottom: var(--spacing-lg);
+  max-height: none; /* Remove height constraint */
+  overflow: visible; /* Ensure content is visible */
 }
 
 .detail-section h4 {
@@ -455,6 +494,8 @@ a:hover {
   grid-template-columns: 120px 1fr;
   gap: var(--spacing-sm);
   align-items: start;
+  max-height: none; /* Remove height constraint */
+  overflow: visible; /* Ensure content is visible */
 }
 
 .detail-label {
@@ -580,8 +621,8 @@ a:hover {
 
 .collapsible .collapsible-content {
   transition: all 0.3s ease;
-  overflow: hidden;
-  max-height: 1000px;
+  overflow: visible; /* Change from hidden to visible */
+  max-height: none; /* Remove height constraint */
   opacity: 1;
 }
 
@@ -590,6 +631,7 @@ a:hover {
   opacity: 0;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* Keep hidden when collapsed */
 }
 
 /* Copy Button */
@@ -671,7 +713,7 @@ a:hover {
 
 /* Details Content */
 .details-content {
-  max-height: 700px;
+  max-height: 800px;
   overflow-y: auto;
   padding: var(--spacing-lg);
 }
@@ -727,7 +769,7 @@ a:hover {
   }
   
   .details-content {
-    max-height: 600px;
+    max-height: 700px;
   }
   
   .logs-left-panel .requests-list {
@@ -741,7 +783,7 @@ a:hover {
   }
   
   .details-content {
-    max-height: 500px;
+    max-height: 600px;
     padding: var(--spacing-md);
   }
   

@@ -1,6 +1,6 @@
 {
   "name": "webhookui-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Desktop app for webhook testing with integrated proxy",
   "main": "src/main.js",
   "scripts": {

@@ -15,6 +15,7 @@ class WebhookUI {
     this.currentToken = null;
     this.autoRefreshInterval = null;
     this.requests = [];
+    this.viewedRequests = new Set(); // Track which requests have been viewed
     
     // Make instance available globally for port updates
     window.webhookUI = this;
@@ -43,6 +44,7 @@ class WebhookUI {
     document.getElementById('refreshLogs').addEventListener('click', () => this.loadRequests());
     document.getElementById('toggleAutoRefresh').addEventListener('click', () => this.toggleAutoRefresh());
     document.getElementById('clearLogs').addEventListener('click', () => this.clearLogs());
+    document.getElementById('markAllAsViewed').addEventListener('click', () => this.markAllAsViewed());
     
     // Filters
     document.getElementById('searchFilter').addEventListener('input', () => this.filterRequests());
@@ -75,6 +77,8 @@ class WebhookUI {
 
   setActiveToken(token) {
     this.currentToken = token;
+    this.requests = [];
+    this.viewedRequests.clear(); // Clear viewed requests for new token
     this.updateUI();
     this.saveTokenToStorage();
     this.loadRequests();
@@ -83,6 +87,7 @@ class WebhookUI {
   clearToken() {
     this.currentToken = null;
     this.requests = [];
+    this.viewedRequests.clear(); // Clear viewed requests when clearing token
     this.stopAutoRefresh();
     this.updateUI();
     this.removeTokenFromStorage();
@@ -108,18 +113,51 @@ class WebhookUI {
   async loadRequests() {
     if (!this.currentToken) return;
 
-         const count = document.getElementById('logCount').value || this.config.maxLogCount;
+    const count = document.getElementById('logCount').value || this.config.maxLogCount;
     
     try {
       const response = await fetch(`${this.proxyUrl}/${this.currentToken}/log/${count}`);
       
       if (response.ok) {
-        const requests = await response.json();
-        this.requests = Array.isArray(requests) ? requests : [];
+        const newRequests = await response.json();
+        const newRequestsArray = Array.isArray(newRequests) ? newRequests : [];
+        
+        // Check if this is the first load for this token (no previous requests)
+        const isFirstLoad = this.requests.length === 0;
+        
+        // Track which requests are new (not previously seen)
+        const newRequestIds = new Set(newRequestsArray.map(req => req.Id || req.id));
+        const previousRequestIds = new Set(this.requests.map(req => req.Id || req.id));
+        
+        if (isFirstLoad) {
+          // On first load, mark all existing requests as viewed
+          newRequestIds.forEach(id => {
+            if (id) {
+              this.viewedRequests.add(id);
+            }
+          });
+        } else {
+          // Mark new requests as unviewed (only for subsequent loads)
+          newRequestIds.forEach(id => {
+            if (!previousRequestIds.has(id)) {
+              // This is a new request, don't mark it as viewed yet
+            }
+          });
+        }
+        
+        // Remove viewed status for requests that are no longer in the list
+        this.viewedRequests.forEach(id => {
+          if (!newRequestIds.has(id)) {
+            this.viewedRequests.delete(id);
+          }
+        });
+        
+        this.requests = newRequestsArray;
         this.renderRequests();
       } else if (response.status === 404) {
         // No requests yet
         this.requests = [];
+        this.viewedRequests.clear(); // Clear viewed requests when starting fresh
         this.renderRequests();
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -151,6 +189,26 @@ class WebhookUI {
     container.querySelectorAll('.request-item').forEach((item, index) => {
       item.addEventListener('click', () => this.showRequestDetails(filteredRequests[index]));
     });
+    
+    // Update new requests counter in header
+    this.updateNewRequestsCounter();
+  }
+
+  updateNewRequestsCounter() {
+    const newRequestsCount = this.requests.filter(req => {
+      const requestId = req.Id || req.id;
+      return requestId && !this.viewedRequests.has(requestId);
+    }).length;
+    
+    // Update the header title to show new requests count
+    const headerTitle = document.querySelector('.logs-header h2');
+    if (headerTitle) {
+      if (newRequestsCount > 0) {
+        headerTitle.innerHTML = `<i class="fas fa-list"></i> Request Logs <span class="new-requests-badge">${newRequestsCount} new</span>`;
+      } else {
+        headerTitle.innerHTML = `<i class="fas fa-list"></i> Request Logs`;
+      }
+    }
   }
 
   renderRequestItem(request) {
@@ -172,8 +230,13 @@ class WebhookUI {
     const methodClass = `method-${method.toLowerCase()}`;
     const statusClass = `status-${Math.floor(status / 100) * 100}`;
     
+    // Check if this request is new (unviewed)
+    const requestId = request.Id || request.id;
+    const isNewRequest = requestId && !this.viewedRequests.has(requestId);
+    const newRequestClass = isNewRequest ? 'new-request' : '';
+    
     return `
-      <div class="request-item" data-request-id="${request.Id || request.id || Date.now()}">
+      <div class="request-item ${newRequestClass}" data-request-id="${requestId || Date.now()}">
         <div class="request-header">
           <span class="request-method ${methodClass}">${method}</span>
           <span class="request-path" title="${fullPath}">${displayPath}</span>
@@ -224,6 +287,23 @@ class WebhookUI {
         panel.style.display === 'block') {
       this.closeDetailsPanel();
       return;
+    }
+    
+    // Mark this request as viewed
+    if (requestId) {
+      this.viewedRequests.add(requestId);
+      
+      // Remove the 'new-request' class from the request item
+      const requestItems = document.querySelectorAll('.request-item');
+      requestItems.forEach(item => {
+        const itemId = item.getAttribute('data-request-id');
+        if (itemId === requestId) {
+          item.classList.remove('new-request');
+        }
+      });
+      
+      // Update the new requests counter
+      this.updateNewRequestsCounter();
     }
     
     // Clear any active state from previous requests
@@ -483,7 +563,15 @@ class WebhookUI {
 
   clearLogs() {
     this.requests = [];
+    this.viewedRequests.clear(); // Clear viewed requests when clearing logs
     this.renderRequests();
+  }
+
+  markAllAsViewed() {
+    this.viewedRequests.clear(); // Mark all as viewed
+    this.renderRequests(); // Re-render to remove 'new-request' class from all items
+    this.updateNewRequestsCounter(); // Update the counter
+    this.showSuccess('All requests marked as viewed!');
   }
   // Connection Management
   async checkProxyConnection() {
