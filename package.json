@@ -17,8 +17,8 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^32.2.6",
-    "electron-builder": "^25.1.8"
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.20"
   },
   "dependencies": {
     "cors": "^2.8.5",
