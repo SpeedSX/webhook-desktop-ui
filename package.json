@@ -17,12 +17,12 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^38.2.1",
-    "electron-builder": "^26.0.20"
+    "electron": "^41.2.0",
+    "electron-builder": "^26.9.0"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "http-proxy-middleware": "^3.0.5"
   },
   "build": {

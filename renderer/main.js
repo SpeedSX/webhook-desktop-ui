@@ -214,8 +214,9 @@ class WebhookUI {
   renderRequestItem(request) {
     // Handle the actual webhook service format
     const time = new Date(request.Date || request.timestamp || Date.now()).toLocaleString();
-    const method = (request.MessageObject?.Method || request.method || 'GET').toUpperCase();
-    const fullPath = request.MessageObject?.Value || request.path || request.url || '/';
+    const messageObj = this.getMessageObject(request);
+    const method = (messageObj.Method || request.method || 'GET').toUpperCase();
+    const fullPath = messageObj.Value || request.path || request.url || '/';
     
     // Extract the path after the token (more useful for developers)
     let displayPath = fullPath;
@@ -225,7 +226,7 @@ class WebhookUI {
       displayPath = afterToken || '/';
     }
     
-    const status = request.MessageObject?.StatusCode || request.statusCode || request.status || 200;
+    const status = messageObj.StatusCode || request.statusCode || request.status || 200;
     
     const methodClass = `method-${method.toLowerCase()}`;
     const statusClass = `status-${Math.floor(status / 100) * 100}`;
@@ -245,10 +246,10 @@ class WebhookUI {
         </div>
         <div class="request-preview">
           <div>
-            <strong>Headers:</strong> ${Object.keys(request.MessageObject?.Headers || request.headers || {}).length} items
+            <strong>Headers:</strong> ${Object.keys(messageObj.Headers || request.headers || {}).length} items
           </div>
           <div>
-            <strong>Body:</strong> ${this.getBodyPreview(request.MessageObject?.Body || request.body)}
+            <strong>Body:</strong> ${this.getBodyPreview(this.getRequestBody(request))}
           </div>
         </div>
       </div>
@@ -329,8 +330,10 @@ class WebhookUI {
 
   renderRequestDetails(request) {
     const time = new Date(request.Date || request.timestamp || Date.now()).toLocaleString();
-    const messageObj = request.MessageObject || {};
+    const messageObj = this.getMessageObject(request);
     const fullPath = messageObj.Value || request.path || request.url || '/';
+    const requestBody = this.getRequestBody(request);
+    const bodyObject = this.getBodyObject(request);
     
     // Extract the path after the token for better readability
     let endpointPath = fullPath;
@@ -404,10 +407,10 @@ class WebhookUI {
             <i class="fas fa-copy"></i> Copy
           </button>
         </div>
-        <div class="code-block collapsible-content">${this.formatRequestBody(messageObj.Body || request.body)}</div>
+        <div class="code-block collapsible-content">${this.formatRequestBody(requestBody)}</div>
       </div>
 
-      ${messageObj.BodyObject ? `
+      ${bodyObject ? `
         <div class="detail-section collapsible collapsed">
           <div class="section-header">
             <h4 class="collapsible-header" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
@@ -417,7 +420,7 @@ class WebhookUI {
               <i class="fas fa-copy"></i> Copy
             </button>
           </div>
-          <div class="code-block collapsible-content">${this.formatJSON(messageObj.BodyObject)}</div>
+          <div class="code-block collapsible-content">${this.formatJSON(bodyObject)}</div>
         </div>
       ` : ''}
 
@@ -501,12 +504,13 @@ class WebhookUI {
     
     if (searchTerm) {
       filtered = filtered.filter(request => {
-        const messageObj = request.MessageObject || {};
+        const messageObj = this.getMessageObject(request);
+        const requestBody = this.getRequestBody(request);
         const searchableText = [
           messageObj.Method || request.method,
           messageObj.Value || request.path || request.url,
           JSON.stringify(messageObj.Headers || request.headers || {}),
-          messageObj.Body || (typeof request.body === 'string' ? request.body : JSON.stringify(request.body || {})),
+          typeof requestBody === 'string' ? requestBody : JSON.stringify(requestBody || {}),
           request.Id || request.id || '',
           request.TokenId || ''
         ].join(' ').toLowerCase();
@@ -523,6 +527,20 @@ class WebhookUI {
     }
     
     return filtered;
+  }
+
+  getMessageObject(request) {
+    return request.MessageObject || request.message_object || {};
+  }
+
+  getRequestBody(request) {
+    const messageObj = this.getMessageObject(request);
+    return messageObj.Body || request.Body || request.body || null;
+  }
+
+  getBodyObject(request) {
+    const messageObj = this.getMessageObject(request);
+    return messageObj.BodyObject || request.BodyObject || request.body_object || null;
   }
 
   filterRequests() {
